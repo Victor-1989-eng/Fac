@@ -1,37 +1,33 @@
 import os
-import time
-import requests
-from datetime import datetime
-from telegram import Bot
-from telegram.error import TelegramError
+from telegram import Update, Bot
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
+from dotenv import load_dotenv
 
-# === НАСТРОЙКИ ===
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/3/3c/Piri_reis_world_map_01.jpg"
-TEXT = "📌 <b>Карта, которой не должно быть</b>\n\nВ 1929 году в Турции нашли карту 1513 года, где точно изображена Антарктида безо льда... Кто мог её создать?\n\n#тайнадня #картапириреиса #антарктида"
-SEND_HOUR = 7
+load_dotenv()
 
-bot = Bot(token=TELEGRAM_TOKEN)
+TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = os.getenv("ADMIN_ID")
 
-def send_post():
-    try:
-        image_data = requests.get(IMAGE_URL).content
-        bot.send_photo(
-            chat_id=CHANNEL_ID,
-            photo=image_data,
-            caption=TEXT,
-            parse_mode="HTML"
+def handle_message(update: Update, context: CallbackContext):
+    msg = update.effective_message
+
+    # Пересылаем админу (укажи свой Telegram ID)
+    if ADMIN_ID:
+        context.bot.forward_message(
+            chat_id=ADMIN_ID,
+            from_chat_id=msg.chat_id,
+            message_id=msg.message_id
         )
-        print("✅ Пост отправлен")
-    except TelegramError as e:
-        print(f"❌ Ошибка Telegram: {e}")
-    except Exception as ex:
-        print(f"⚠️ Ошибка: {ex}")
 
-while True:
-    now = datetime.now()
-    if now.hour == SEND_HOUR and now.minute == 0:
-        send_post()
-        time.sleep(60)
-    time.sleep(20)
+    # Ответ пользователю
+    msg.reply_text("Спасибо! Если будет токсично — опубликуем 😈")
+
+def main():
+    updater = Updater(TOKEN)
+    dp = updater.dispatcher
+    dp.add_handler(MessageHandler(Filters.all, handle_message))
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
