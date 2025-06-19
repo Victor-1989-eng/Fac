@@ -1,6 +1,6 @@
 import os
 import requests
-from telegram import Update
+from telegram import ApplicationBuilder
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
